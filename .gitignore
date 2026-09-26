@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Environment secrets
+.env
+
+# ML artifacts (large files — we'll track these differently later)
+ml/data/raw/*
+ml/data/processed/*
+ml/saved_models/*.pkl
+ml/saved_models/*.joblib
+!ml/data/raw/.gitkeep
+!ml/data/processed/.gitkeep
+!ml/saved_models/.gitkeep
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/

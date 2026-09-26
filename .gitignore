@@ -7,13 +7,9 @@ venv/
 # Environment secrets
 .env
 
-# ML artifacts (large files — we'll track these differently later)
-ml/data/raw/*
-ml/data/processed/*
+# ML artifacts (large trained models only — datasets ARE tracked)
 ml/saved_models/*.pkl
 ml/saved_models/*.joblib
-!ml/data/raw/.gitkeep
-!ml/data/processed/.gitkeep
 !ml/saved_models/.gitkeep
 
 # VS Code

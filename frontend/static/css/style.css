@@ -291,9 +291,12 @@ h1, h2 {
 }
 
 .gauge-label {
-    font-size: 0.8rem;
+    font-size: 0.68rem;
     color: var(--muted);
     margin-top: 0.2rem;
+    text-align: center;
+    line-height: 1.2;
+    padding: 0 0.5rem;
 }
 
 .status-line {

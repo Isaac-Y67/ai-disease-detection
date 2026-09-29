@@ -1,13 +1,16 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import joblib
 import numpy as np
 import os
 
-app = Flask(__name__)
-
-# Build an absolute path based on THIS FILE's location, not the terminal's
-# current directory — this makes it work no matter where you run it from
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "..", "..", "frontend", "templates"),
+    static_folder=os.path.join(BASE_DIR, "..", "..", "frontend", "static")
+)
+
 MODEL_PATH = os.path.join(BASE_DIR, "..", "..", "ml", "saved_models", "heart_disease_model.pkl")
 SCALER_PATH = os.path.join(BASE_DIR, "..", "..", "ml", "saved_models", "heart_disease_scaler.pkl")
 
@@ -22,7 +25,7 @@ FEATURE_ORDER = [
 
 @app.route("/")
 def home():
-    return "AI Disease Detection System — backend is running."
+    return render_template("index.html")
 
 @app.route("/predict", methods=["POST"])
 def predict():

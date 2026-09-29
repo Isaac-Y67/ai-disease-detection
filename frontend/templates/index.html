@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Disease Detection System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="ecg-line" aria-hidden="true">
+        <svg viewBox="0 0 600 60" preserveAspectRatio="none">
+            <polyline points="0,30 60,30 75,30 85,10 95,50 105,30 120,30 180,30 195,30 205,15 215,45 225,30 240,30 300,30 315,30 325,10 335,50 345,30 360,30 420,30 435,30 445,15 455,45 465,30 480,30 540,30 555,30 565,10 575,50 585,30 600,30"/>
+        </svg>
+    </div>
+    <div class="header-inner">
+        <span class="module-badge">Cardiovascular Risk Module</span>
+        <h1>Predict heart disease risk in seconds</h1>
+        <p class="header-sub">Enter a patient's clinical measurements below. The model returns a risk classification and confidence score to support — not replace — a clinician's judgment.</p>
+    </div>
+</header>
+
+<main class="layout">
+    <form id="predictionForm" class="form-panel" autocomplete="off">
+
+        <fieldset class="form-section">
+            <legend>Patient profile</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" min="1" max="120" required>
+                </div>
+                <div class="field">
+                    <label for="sex">Sex</label>
+                    <select id="sex" name="sex" required>
+                        <option value="1">Male</option>
+                        <option value="0">Female</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+            <legend>Vitals</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="trestbps">Resting blood pressure <span>mm Hg</span></label>
+                    <input type="number" id="trestbps" name="trestbps" required>
+                </div>
+                <div class="field">
+                    <label for="chol">Serum cholesterol <span>mg/dl</span></label>
+                    <input type="number" id="chol" name="chol" required>
+                </div>
+                <div class="field">
+                    <label for="fbs">Fasting blood sugar &gt; 120 mg/dl</label>
+                    <select id="fbs" name="fbs" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+            <legend>Cardiac symptoms</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="cp">Chest pain type</label>
+                    <select id="cp" name="cp" required>
+                        <option value="0">Typical angina</option>
+                        <option value="1">Atypical angina</option>
+                        <option value="2">Non-anginal pain</option>
+                        <option value="3">Asymptomatic</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="thalach">Max heart rate achieved</label>
+                    <input type="number" id="thalach" name="thalach" required>
+                </div>
+                <div class="field">
+                    <label for="exang">Exercise-induced angina</label>
+                    <select id="exang" name="exang" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+            <legend>ECG &amp; stress test</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="restecg">Resting ECG results</label>
+                    <select id="restecg" name="restecg" required>
+                        <option value="0">Normal</option>
+                        <option value="1">ST-T wave abnormality</option>
+                        <option value="2">Left ventricular hypertrophy</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="oldpeak">ST depression (oldpeak)</label>
+                    <input type="number" step="0.1" id="oldpeak" name="oldpeak" required>
+                </div>
+                <div class="field">
+                    <label for="slope">Slope of peak exercise ST</label>
+                    <select id="slope" name="slope" required>
+                        <option value="0">Upsloping</option>
+                        <option value="1">Flat</option>
+                        <option value="2">Downsloping</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="ca">Major vessels colored <span>0&ndash;4</span></label>
+                    <input type="number" min="0" max="4" id="ca" name="ca" required>
+                </div>
+                <div class="field">
+                    <label for="thal">Thalassemia type</label>
+                    <select id="thal" name="thal" required>
+                        <option value="0">Normal</option>
+                        <option value="1">Fixed defect</option>
+                        <option value="2">Reversible defect</option>
+                        <option value="3">Other</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <button type="submit" class="submit-btn">Analyze risk</button>
+    </form>
+
+    <aside class="result-panel" id="resultPanel">
+        <div class="result-inner" id="resultEmpty">
+            <svg class="pulse-icon" viewBox="0 0 100 40" aria-hidden="true">
+                <polyline points="0,20 30,20 38,5 46,35 54,20 100,20"/>
+            </svg>
+            <h2>Assessment</h2>
+            <p>Fill in the patient's details and select <strong>Analyze risk</strong> to generate a prediction and risk classification.</p>
+        </div>
+
+        <div class="result-inner is-hidden" id="resultFilled">
+            <h2>Assessment</h2>
+
+            <div class="gauge-wrap">
+                <svg class="gauge" viewBox="0 0 140 140">
+                    <circle class="gauge-track" cx="70" cy="70" r="58"></circle>
+                    <circle class="gauge-arc" id="gaugeArc" cx="70" cy="70" r="58"></circle>
+                </svg>
+                <div class="gauge-center">
+                    <span class="gauge-value" id="gaugeValue">0%</span>
+                    <span class="gauge-label" id="gaugeLabel">&nbsp;</span>
+                </div>
+            </div>
+
+            <p class="status-line" id="statusLine"></p>
+            <p class="disclaimer">This result is decision-support information only and should be reviewed by a qualified healthcare professional.</p>
+        </div>
+    </aside>
+</main>
+
+<footer class="site-footer">
+    <p>Decision-support output only &mdash; always to be reviewed by a qualified healthcare professional.</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

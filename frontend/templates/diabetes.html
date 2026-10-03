@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes Risk Assessment — AI Disease Detection System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="module-nav">
+    <a href="/">Heart Disease</a>
+    <a href="/diabetes" class="active">Diabetes</a>
+</nav>
+
+<header class="site-header">
+    <div class="ecg-line" aria-hidden="true">
+        <svg viewBox="0 0 600 60" preserveAspectRatio="none">
+            <polyline points="0,40 50,40 100,25 150,45 200,20 250,40 300,30 350,42 400,22 450,38 500,28 550,40 600,32"/>
+        </svg>
+    </div>
+    <div class="header-inner">
+        <span class="module-badge">Diabetes Risk Module</span>
+        <h1>Predict diabetes risk in seconds</h1>
+        <p class="header-sub">Enter a patient's clinical measurements below. The model returns a risk classification and confidence score to support — not replace — a clinician's judgment.</p>
+    </div>
+</header>
+
+<main class="layout">
+    <form id="diabetesForm" class="form-panel predict-form" data-endpoint="/predict-diabetes" autocomplete="off">
+
+        <fieldset class="form-section">
+            <legend>Patient profile</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="Age">Age</label>
+                    <input type="number" id="Age" name="Age" min="1" max="120" required>
+                </div>
+                <div class="field">
+                    <label for="Pregnancies">Number of pregnancies</label>
+                    <input type="number" id="Pregnancies" name="Pregnancies" min="0" required>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+            <legend>Vitals</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="Glucose">Plasma glucose <span>mg/dL</span></label>
+                    <input type="number" id="Glucose" name="Glucose" required>
+                </div>
+                <div class="field">
+                    <label for="BloodPressure">Diastolic blood pressure <span>mm Hg</span></label>
+                    <input type="number" id="BloodPressure" name="BloodPressure" required>
+                </div>
+                <div class="field">
+                    <label for="BMI">Body mass index <span>kg/m&sup2;</span></label>
+                    <input type="number" step="0.1" id="BMI" name="BMI" required>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+            <legend>Clinical markers</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="SkinThickness">Triceps skin fold <span>mm</span></label>
+                    <input type="number" id="SkinThickness" name="SkinThickness" required>
+                </div>
+                <div class="field">
+                    <label for="Insulin">Serum insulin <span>mu U/ml</span></label>
+                    <input type="number" id="Insulin" name="Insulin" required>
+                </div>
+                <div class="field">
+                    <label for="DiabetesPedigreeFunction">Diabetes pedigree function</label>
+                    <input type="number" step="0.001" id="DiabetesPedigreeFunction" name="DiabetesPedigreeFunction" required>
+                </div>
+            </div>
+        </fieldset>
+
+        <button type="submit" class="submit-btn">Analyze risk</button>
+    </form>
+
+    <aside class="result-panel" id="resultPanel">
+        <div class="result-inner" id="resultEmpty">
+            <svg class="pulse-icon" viewBox="0 0 100 40" aria-hidden="true">
+                <polyline points="0,20 30,20 38,5 46,35 54,20 100,20"/>
+            </svg>
+            <h2>Assessment</h2>
+            <p>Fill in the patient's details and select <strong>Analyze risk</strong> to generate a prediction and risk classification.</p>
+        </div>
+
+        <div class="result-inner is-hidden" id="resultFilled">
+            <h2>Assessment</h2>
+
+            <div class="gauge-wrap">
+                <svg class="gauge" viewBox="0 0 140 140">
+                    <circle class="gauge-track" cx="70" cy="70" r="58"></circle>
+                    <circle class="gauge-arc" id="gaugeArc" cx="70" cy="70" r="58"></circle>
+                </svg>
+                <div class="gauge-center">
+                    <span class="gauge-value" id="gaugeValue">0%</span>
+                    <span class="gauge-label" id="gaugeLabel">&nbsp;</span>
+                </div>
+            </div>
+
+            <p class="status-line" id="statusLine"></p>
+            <p class="disclaimer">This result is decision-support information only and should be reviewed by a qualified healthcare professional.</p>
+        </div>
+    </aside>
+</main>
+
+<footer class="site-footer">
+    <p>Decision-support output only &mdash; always to be reviewed by a qualified healthcare professional.</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -11,6 +11,11 @@
 </head>
 <body>
 
+<nav class="module-nav">
+    <a href="/" class="active">Heart Disease</a>
+    <a href="/diabetes">Diabetes</a>
+</nav>
+
 <header class="site-header">
     <div class="ecg-line" aria-hidden="true">
         <svg viewBox="0 0 600 60" preserveAspectRatio="none">
@@ -25,7 +30,7 @@
 </header>
 
 <main class="layout">
-    <form id="predictionForm" class="form-panel" autocomplete="off">
+    <form id="predictionForm" class="form-panel predict-form" data-endpoint="/predict" autocomplete="off">
 
         <fieldset class="form-section">
             <legend>Patient profile</legend>

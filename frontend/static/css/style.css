@@ -353,3 +353,7 @@ h1, h2 {
     color: var(--muted);
     font-size: 0.85rem;
 }
+/* Fix: headline was ink-on-ink (invisible) against the dark header */
+.site-header h1 {
+    color: #ffffff;
+}

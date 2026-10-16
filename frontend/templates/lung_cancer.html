@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lung Cancer Risk Assessment — AI Disease Detection System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="module-nav">
+    <a href="/">Heart Disease</a>
+    <a href="/diabetes">Diabetes</a>
+    <a href="/hypertension">Hypertension</a>
+    <a href="/lung-cancer" class="active">Lung Cancer</a>
+</nav>
+
+<header class="site-header">
+    <div class="ecg-line" aria-hidden="true">
+        <svg viewBox="0 0 600 60" preserveAspectRatio="none">
+            <polyline points="0,32 10,25 20,19 30,15 40,13 50,15 60,20 70,28 80,36 90,45 100,51 110,54 120,53 130,48 140,41 150,32 160,23 170,16 180,12 190,12 200,15 210,21 220,28 230,36 240,42 250,46 260,47 270,46 280,42 290,37 300,32 310,27 320,24 330,22 340,21 350,23 360,26 370,30 380,34 390,38 400,41 410,43 420,42 430,40 440,37 450,32 460,27 470,22 480,18 490,17 500,18 510,22 520,28 530,36 540,43 550,49 560,52 570,52 580,48 590,41 600,32"/>
+        </svg>
+    </div>
+    <div class="header-inner">
+        <span class="module-badge">Lung Cancer Risk Module</span>
+        <h1>Screen for lung cancer risk from symptoms</h1>
+        <p class="header-sub">Answer a short symptom and lifestyle survey for the patient. The model returns a risk classification and confidence score to support — not replace — a clinician's judgment. It does not replace chest imaging or biopsy.</p>
+    </div>
+</header>
+
+<main class="layout">
+    <form id="lungCancerForm" class="form-panel predict-form" data-endpoint="/predict-lung-cancer" autocomplete="off">
+
+        <fieldset class="form-section">
+            <legend>Patient profile</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" min="1" max="120" required>
+                </div>
+                <div class="field">
+                    <label for="male">Sex</label>
+                    <select id="male" name="male" required>
+                        <option value="1">Male</option>
+                        <option value="0">Female</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+            <legend>Lifestyle</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="smoking">Smoker</label>
+                    <select id="smoking" name="smoking" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="alcohol_consuming">Alcohol consumption</label>
+                    <select id="alcohol_consuming" name="alcohol_consuming" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="peer_pressure">Peer pressure</label>
+                    <select id="peer_pressure" name="peer_pressure" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="anxiety">Anxiety</label>
+                    <select id="anxiety" name="anxiety" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+            <legend>Symptoms</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="coughing">Coughing</label>
+                    <select id="coughing" name="coughing" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="wheezing">Wheezing</label>
+                    <select id="wheezing" name="wheezing" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="shortness_of_breath">Shortness of breath</label>
+                    <select id="shortness_of_breath" name="shortness_of_breath" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="chest_pain">Chest pain</label>
+                    <select id="chest_pain" name="chest_pain" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="fatigue">Fatigue</label>
+                    <select id="fatigue" name="fatigue" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="swallowing_difficulty">Swallowing difficulty</label>
+                    <select id="swallowing_difficulty" name="swallowing_difficulty" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+            <legend>Signs and medical history</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="yellow_fingers">Yellow fingers</label>
+                    <select id="yellow_fingers" name="yellow_fingers" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="chronic_disease">Chronic disease</label>
+                    <select id="chronic_disease" name="chronic_disease" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="allergy">Allergy</label>
+                    <select id="allergy" name="allergy" required>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <button type="submit" class="submit-btn">Analyze risk</button>
+    </form>
+
+    <aside class="result-panel" id="resultPanel">
+        <div class="result-inner" id="resultEmpty">
+            <svg class="pulse-icon" viewBox="0 0 100 40" aria-hidden="true">
+                <polyline points="0,20 30,20 38,5 46,35 54,20 100,20"/>
+            </svg>
+            <h2>Assessment</h2>
+            <p>Fill in the patient's details and select <strong>Analyze risk</strong> to generate a prediction and risk classification.</p>
+        </div>
+
+        <div class="result-inner is-hidden" id="resultFilled">
+            <h2>Assessment</h2>
+
+            <div class="gauge-wrap">
+                <svg class="gauge" viewBox="0 0 140 140">
+                    <circle class="gauge-track" cx="70" cy="70" r="58"></circle>
+                    <circle class="gauge-arc" id="gaugeArc" cx="70" cy="70" r="58"></circle>
+                </svg>
+                <div class="gauge-center">
+                    <span class="gauge-value" id="gaugeValue">0%</span>
+                    <span class="gauge-label" id="gaugeLabel">&nbsp;</span>
+                </div>
+            </div>
+
+            <p class="status-line" id="statusLine"></p>
+            <p class="disclaimer">This result is decision-support information only and should be reviewed by a qualified healthcare professional.</p>
+        </div>
+    </aside>
+</main>
+
+<footer class="site-footer">
+    <p>Decision-support output only &mdash; always to be reviewed by a qualified healthcare professional.</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

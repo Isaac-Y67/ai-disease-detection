@@ -38,6 +38,11 @@ MODULES = {
         "prevalentStroke", "diabetes", "totChol", "sysBP", "diaBP",
         "BMI", "heartRate", "glucose"
     ]),
+    "lung_cancer": load_module("lung_cancer", [
+        "male", "age", "smoking", "yellow_fingers", "anxiety", "peer_pressure",
+        "chronic_disease", "fatigue", "allergy", "wheezing", "alcohol_consuming",
+        "coughing", "shortness_of_breath", "swallowing_difficulty", "chest_pain"
+    ]),
 }
 
 
@@ -89,6 +94,11 @@ def hypertension_page():
     return render_template("hypertension.html")
 
 
+@app.route("/lung-cancer")
+def lung_cancer_page():
+    return render_template("lung_cancer.html")
+
+
 # ---------- Prediction API ----------
 
 @app.route("/predict", methods=["POST"])
@@ -104,6 +114,11 @@ def predict_diabetes():
 @app.route("/predict-hypertension", methods=["POST"])
 def predict_hypertension():
     return run_prediction("hypertension")
+
+
+@app.route("/predict-lung-cancer", methods=["POST"])
+def predict_lung_cancer():
+    return run_prediction("lung_cancer")
 
 
 if __name__ == "__main__":

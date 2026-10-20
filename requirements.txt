@@ -17,6 +17,7 @@ cloudpickle==3.1.2
 colorama==0.4.6
 comm==0.2.3
 contourpy==1.4.0
+cryptography==50.0.2
 cycler==0.12.1
 debugpy==1.8.22
 defusedxml==0.7.1
@@ -81,8 +82,10 @@ psutil==7.2.2
 pure_eval==0.2.4
 pycparser==3.0
 Pygments==2.21.0
+PyMySQL==1.2.3
 pyparsing==3.3.3
 python-dateutil==2.9.0.post0
+python-dotenv==1.2.4
 python-json-logger==4.2.0
 pywinpty==3.0.5
 PyYAML==6.0.3

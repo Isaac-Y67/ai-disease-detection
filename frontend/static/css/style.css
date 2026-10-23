@@ -357,3 +357,70 @@ h1, h2 {
 .site-header h1 {
     color: #ffffff;
 }
+
+/* ---------- Sign-in page ---------- */
+
+.login-layout {
+    max-width: 440px;
+    margin: -2rem auto 0;
+    padding: 0 1.5rem 4rem;
+    position: relative;
+}
+
+.login-card h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1.25rem;
+}
+
+.login-card .field {
+    margin-bottom: 1.1rem;
+}
+
+.login-error {
+    background: var(--danger-soft);
+    color: #7c2c26;
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.92rem;
+    margin: 0 0 1.1rem;
+}
+
+/* ---------- Signed-in user box in the navigation bar ---------- */
+
+.module-nav {
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.nav-user {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #a9c3bd;
+    font-size: 0.85rem;
+}
+
+.nav-user strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.nav-user form { margin: 0; }
+
+.nav-user button {
+    background: transparent;
+    color: #cfe0db;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem;
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-user button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}

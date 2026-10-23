@@ -1,0 +1,9 @@
+{% if g.user %}
+<div class="nav-user">
+    <span><strong>{{ g.user.full_name }}</strong> &middot; {{ g.user.role_name }}</span>
+    <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Sign out</button>
+    </form>
+</div>
+{% endif %}

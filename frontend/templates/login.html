@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in — AI Disease Detection System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="ecg-line" aria-hidden="true">
+        <svg viewBox="0 0 600 60" preserveAspectRatio="none">
+            <polyline points="0,30 60,30 75,30 85,10 95,50 105,30 120,30 180,30 195,30 205,15 215,45 225,30 240,30 300,30 315,30 325,10 335,50 345,30 360,30 420,30 435,30 445,15 455,45 465,30 480,30 540,30 555,30 565,10 575,50 585,30 600,30"/>
+        </svg>
+    </div>
+    <div class="header-inner">
+        <span class="module-badge">Secure sign-in</span>
+        <h1>AI Disease Detection System</h1>
+        <p class="header-sub">Sign in with your clinic account to run assessments. Access depends on your role, and every sign-in is recorded.</p>
+    </div>
+</header>
+
+<main class="login-layout">
+    <form class="form-panel login-card" method="post" action="{{ url_for('login') }}">
+        <h2>Sign in</h2>
+
+        {% if error %}
+        <p class="login-error" role="alert">{{ error }}</p>
+        {% endif %}
+
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next_url }}">
+
+        <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" value="{{ email }}" required maxlength="120" autocomplete="username" autofocus>
+        </div>
+
+        <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required maxlength="256" autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="submit-btn">Sign in</button>
+    </form>
+</main>
+
+<footer class="site-footer">
+    <p>Decision-support output only &mdash; always to be reviewed by a qualified healthcare professional.</p>
+</footer>
+
+</body>
+</html>

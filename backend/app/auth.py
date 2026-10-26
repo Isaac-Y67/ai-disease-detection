@@ -6,6 +6,9 @@ from urllib.parse import urlparse
 
 from flask import abort, g, jsonify, redirect, request, session, url_for
 
+ROLE_ADMIN = "Administrator"
+ROLE_HP = "Healthcare Professional"
+
 
 def csrf_token():
     """Return this session's security token, creating it on first use."""

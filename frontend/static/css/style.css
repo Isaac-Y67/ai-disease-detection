@@ -424,3 +424,83 @@ h1, h2 {
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
 }
+
+/* ---------- Administration pages ---------- */
+
+.panel-title {
+    font-size: 1.15rem;
+    margin-bottom: 1rem;
+}
+
+.data-table-wrap { overflow-x: auto; }
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.data-table th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--ink-soft);
+    padding: 0.55rem 0.6rem;
+    border-bottom: 2px solid var(--line);
+    white-space: nowrap;
+}
+
+.data-table td {
+    padding: 0.65rem 0.6rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+.row-action { text-align: right; white-space: nowrap; }
+.row-action form { margin: 0; }
+
+.pill {
+    display: inline-block;
+    padding: 0.15rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+.pill-on  { background: var(--safe-soft);   color: #1f5c50; }
+.pill-off { background: var(--danger-soft); color: #7c2c26; }
+
+.btn-small {
+    background: #ffffff;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.35rem 0.8rem;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.btn-small:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+.flash {
+    padding: 0.7rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    margin: 0 0 1rem;
+}
+.flash-ok    { background: var(--safe-soft);   color: #1f5c50; }
+.flash-error { background: var(--danger-soft); color: #7c2c26; }
+
+.panel-note {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin: 0 0 1rem;
+}
+
+.field.stacked { margin-bottom: 1rem; }
+
+.error-link {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+}

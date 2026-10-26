@@ -1,0 +1,83 @@
+{% extends "admin_base.html" %}
+
+{% block title %}User accounts{% endblock %}
+{% block heading %}User accounts{% endblock %}
+{% block subheading %}Create accounts for clinic staff, assign their role, and deactivate access when someone leaves. Every change is recorded in the audit log.{% endblock %}
+
+{% block content %}
+<section class="form-panel">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <p class="flash flash-{{ category }}" role="status">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <h2 class="panel-title">Accounts ({{ users|length }})</h2>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>{{ u.full_name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.role_name }}</td>
+                    <td>
+                        {% if u.is_active %}<span class="pill pill-on">Active</span>
+                        {% else %}<span class="pill pill-off">Deactivated</span>{% endif %}
+                    </td>
+                    <td class="row-action">
+                        {% if u.user_id == g.user.user_id %}
+                            <span class="panel-note">You</span>
+                        {% else %}
+                        <form method="post" action="{{ url_for('admin_toggle_user', user_id=u.user_id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-small">{{ 'Deactivate' if u.is_active else 'Reactivate' }}</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<aside class="form-panel">
+    <h2 class="panel-title">Create an account</h2>
+
+    {% if problem %}
+    <p class="flash flash-error" role="alert">{{ problem }}</p>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('admin_users') }}" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="field stacked">
+            <label for="full_name">Full name</label>
+            <input type="text" id="full_name" name="full_name" value="{{ form.get('full_name', '') }}" required maxlength="100">
+        </div>
+        <div class="field stacked">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" value="{{ form.get('email', '') }}" required maxlength="120">
+        </div>
+        <div class="field stacked">
+            <label for="role">Role</label>
+            <select id="role" name="role" required>
+                {% for r in roles %}
+                <option value="{{ r }}" {{ 'selected' if form.get('role') == r else '' }}>{{ r }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field stacked">
+            <label for="password">Temporary password <span>at least 10 characters</span></label>
+            <input type="password" id="password" name="password" required minlength="10" maxlength="256" autocomplete="new-password">
+        </div>
+        <p class="panel-note">Give the temporary password to the person privately.</p>
+
+        <button type="submit" class="submit-btn">Create account</button>
+    </form>
+</aside>
+{% endblock %}

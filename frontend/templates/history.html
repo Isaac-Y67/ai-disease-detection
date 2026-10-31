@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment history — AI Disease Detection System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="module-nav">
+    <a href="/">Heart Disease</a>
+    <a href="/diabetes">Diabetes</a>
+    <a href="/hypertension">Hypertension</a>
+    <a href="/lung-cancer">Lung Cancer</a>
+    {% include "_userbox.html" %}
+</nav>
+
+<header class="site-header">
+    <div class="ecg-line" aria-hidden="true">
+        <svg viewBox="0 0 600 60" preserveAspectRatio="none">
+            <polyline points="0,30 60,30 75,30 85,10 95,50 105,30 120,30 180,30 195,30 205,15 215,45 225,30 240,30 300,30 315,30 325,10 335,50 345,30 360,30 420,30 435,30 445,15 455,45 465,30 480,30 540,30 555,30 565,10 575,50 585,30 600,30"/>
+        </svg>
+    </div>
+    <div class="header-inner">
+        <span class="module-badge">Assessment history</span>
+        <h1>Your past assessments</h1>
+        <p class="header-sub">Every assessment you run is saved with its inputs and the model that produced it. Patients appear by code only.</p>
+    </div>
+</header>
+
+<main class="history-layout">
+    <section class="form-panel">
+        <form method="get" action="{{ url_for('history') }}" class="filter-bar">
+            <div class="field">
+                <label for="patient">Patient code <span>starts with</span></label>
+                <input type="text" id="patient" name="patient" value="{{ patient }}" maxlength="20" autocomplete="off">
+            </div>
+            <div class="field">
+                <label for="module">Module</label>
+                <select id="module" name="module">
+                    <option value="">All modules</option>
+                    {% for m in modules %}
+                    <option value="{{ m.module_code }}" {{ 'selected' if module == m.module_code else '' }}>{{ m.module_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label for="from">From</label>
+                <input type="date" id="from" name="from" value="{{ date_from }}">
+            </div>
+            <div class="field">
+                <label for="to">To</label>
+                <input type="date" id="to" name="to" value="{{ date_to }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn-small primary">Apply</button>
+                <a href="{{ url_for('history') }}" class="btn-link">Clear</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="form-panel">
+        <h2 class="panel-title">{{ total }} assessment{{ '' if total == 1 else 's' }}</h2>
+
+        {% if rows %}
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Date</th><th>Patient code</th><th>Module</th><th>Result</th><th>Confidence</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for a in rows %}
+                    <tr>
+                        <td>{{ a.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+                        <td><strong>{{ a.patient_code }}</strong></td>
+                        <td>{{ a.module_name }}</td>
+                        <td><span class="pill pill-{{ a.risk_level|lower }}">{{ a.risk_level }} risk</span></td>
+                        <td>{{ '%.1f'|format(a.probability * 100) }}%</td>
+                        <td class="row-action"><a class="btn-small" href="{{ url_for('assessment_detail', assessment_id=a.assessment_id) }}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="panel-note">No assessments match. Run one from any module page and it will appear here.</p>
+        {% endif %}
+
+        {% if pages > 1 %}
+        <div class="pager">
+            {% if page > 1 %}<a class="btn-small" href="{{ url_for('history', page=page - 1, **filters) }}">Previous</a>{% else %}<span></span>{% endif %}
+            <span>Page {{ page }} of {{ pages }}</span>
+            {% if page < pages %}<a class="btn-small" href="{{ url_for('history', page=page + 1, **filters) }}">Next</a>{% else %}<span></span>{% endif %}
+        </div>
+        {% endif %}
+    </section>
+</main>
+
+<footer class="site-footer">
+    <p>Decision-support output only &mdash; always to be reviewed by a qualified healthcare professional.</p>
+</footer>
+
+</body>
+</html>

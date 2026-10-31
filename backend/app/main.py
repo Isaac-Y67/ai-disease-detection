@@ -1,4 +1,5 @@
-from datetime import timedelta
+from datetime import date, timedelta
+import math
 import os
 import re
 
@@ -10,6 +11,7 @@ import pymysql
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import db
+from validation import clean_patient_code, validate_features, PATIENT_CODE_PATTERN
 from auth import ROLE_ADMIN, ROLE_HP, check_csrf, csrf_token, login_required, role_required, safe_next
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -79,27 +81,55 @@ def classify_risk(prediction, probability):
     return "Low"
 
 
+def patient_sex(module_key, data):
+    """Sex for the patient record, taken from the form (the diabetes model was trained on women only)."""
+    if module_key == "heart":
+        return "Male" if data["sex"] == 1 else "Female"
+    if module_key in ("hypertension", "lung_cancer"):
+        return "Male" if data["male"] == 1 else "Female"
+    return "Female"
+
+
 def run_prediction(module_key):
-    """One shared prediction pipeline for every disease module."""
+    """One shared pipeline for every module: validate, predict, classify risk, save, answer."""
     module = MODULES[module_key]
     data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Send the assessment as JSON."}), 400
 
-    try:
-        features = [data[name] for name in module["features"]]
-    except (KeyError, TypeError) as e:
-        return jsonify({"error": f"Missing field: {e}"}), 400
+    patient_code = clean_patient_code(data.get("patient_code"))
+    if patient_code is None:
+        return jsonify({"error": "Enter a patient code of 1 to 20 letters, digits or hyphens. Do not use a name."}), 400
 
-    features_array = np.array(features).reshape(1, -1)
+    values, problem = validate_features(module_key, data, module["features"])
+    if problem:
+        return jsonify({"error": problem}), 400
+
+    features_array = np.array(values, dtype=float).reshape(1, -1)
     features_scaled = module["scaler"].transform(features_array)
 
-    prediction = module["model"].predict(features_scaled)[0]
-    probability = module["model"].predict_proba(features_scaled)[0][1]
+    prediction = int(module["model"].predict(features_scaled)[0])
+    probability = round(float(module["model"].predict_proba(features_scaled)[0][1]), 4)
+    risk_level = classify_risk(prediction, probability)
+    sex = patient_sex(module_key, data)
+
+    try:
+        assessment_id, _ = db.save_assessment(
+            g.user["user_id"], patient_code, sex, module_key,
+            dict(zip(module["features"], values)), prediction, probability, risk_level)
+    except db.PatientConflict as conflict:
+        return jsonify({"error": f"Patient code {patient_code} is already registered as "
+                                 f"{conflict.existing_sex}, but this form says {sex}. Check the code."}), 409
+
+    db.write_audit(g.user["user_id"], "assessment_created", "assessments", assessment_id, request.remote_addr)
 
     return jsonify({
-        "prediction": int(prediction),
-        "disease_detected": bool(prediction == 1),
-        "probability": round(float(probability), 4),
-        "risk_level": classify_risk(prediction, probability)
+        "prediction": prediction,
+        "disease_detected": prediction == 1,
+        "probability": probability,
+        "risk_level": risk_level,
+        "assessment_id": assessment_id,
+        "patient_code": patient_code,
     })
 
 
@@ -253,6 +283,58 @@ def predict_hypertension():
 @role_required(ROLE_HP)
 def predict_lung_cancer():
     return run_prediction("lung_cancer")
+
+
+# ---------- Assessment history (healthcare professionals: their own assessments) ----------
+
+PAGE_SIZE = 20
+
+
+def parse_date(text):
+    try:
+        return date.fromisoformat(text) if text else None
+    except ValueError:
+        return None
+
+
+@app.route("/history")
+@role_required(ROLE_HP)
+def history():
+    modules = db.list_modules()
+
+    patient = request.args.get("patient", "").strip().upper()
+    if patient and not PATIENT_CODE_PATTERN.match(patient):
+        patient = ""
+    module = request.args.get("module", "")
+    if module not in [m["module_code"] for m in modules]:
+        module = ""
+    date_from, date_to = parse_date(request.args.get("from")), parse_date(request.args.get("to"))
+    try:
+        page = max(1, int(request.args.get("page", "1")))
+    except ValueError:
+        page = 1
+
+    rows, total = db.search_assessments(
+        user_id=g.user["user_id"], patient_code=patient, module_code=module,
+        date_from=date_from, date_to=date_to, limit=PAGE_SIZE, offset=(page - 1) * PAGE_SIZE)
+    pages = max(1, math.ceil(total / PAGE_SIZE))
+
+    # Filters that carry over to the Previous / Next links
+    filters = {k: v for k, v in {"patient": patient, "module": module,
+                                 "from": date_from.isoformat() if date_from else "",
+                                 "to": date_to.isoformat() if date_to else ""}.items() if v}
+    return render_template("history.html", rows=rows, total=total, page=page, pages=pages,
+                           modules=modules, filters=filters, patient=patient, module=module,
+                           date_from=filters.get("from", ""), date_to=filters.get("to", ""))
+
+
+@app.route("/assessment/<int:assessment_id>")
+@role_required(ROLE_HP)
+def assessment_detail(assessment_id):
+    assessment = db.get_assessment(assessment_id, user_id=g.user["user_id"])   # only your own
+    if assessment is None:
+        abort(404)
+    return render_template("assessment_detail.html", a=assessment)
 
 
 # ---------- Administration (administrators only) ----------

@@ -1,5 +1,16 @@
 const CIRCUMFERENCE = 364.42;
 
+function resetGauge(panel) {
+    // Clear any previous result so an old gauge is never shown beside a new message
+    const arc = panel.querySelector("#gaugeArc");
+    arc.style.transition = "none";
+    arc.style.strokeDashoffset = CIRCUMFERENCE;
+    panel.querySelector("#gaugeValue").textContent = "—";
+    panel.querySelector("#gaugeLabel").textContent = "";
+    const note = panel.querySelector(".saved-note");
+    if (note) note.remove();
+}
+
 function animateGauge(container, percentage, colorVar) {
     const arc = container.querySelector("#gaugeArc");
     const valueEl = container.querySelector("#gaugeValue");
@@ -35,9 +46,19 @@ function animateGauge(container, percentage, colorVar) {
     labelEl.textContent = "likelihood of disease";
 }
 
-// Generalized handler — works for ANY form with class "predict-form"
-// and a data-endpoint attribute, so adding future disease modules
-// (hypertension, respiratory illness) needs zero changes here.
+function showSavedNote(statusLine, result) {
+    const note = document.createElement("p");
+    note.className = "saved-note";
+    note.append(`Saved for patient ${result.patient_code} as assessment #${result.assessment_id}. `);
+    const link = document.createElement("a");
+    link.href = `/assessment/${result.assessment_id}`;
+    link.textContent = "View record";
+    note.append(link);
+    statusLine.insertAdjacentElement("afterend", note);
+}
+
+// Works for ANY form with class "predict-form" and a data-endpoint attribute,
+// so every disease module shares this one script.
 document.querySelectorAll("form.predict-form").forEach((form) => {
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -48,7 +69,8 @@ document.querySelectorAll("form.predict-form").forEach((form) => {
         const formData = new FormData(form);
         const data = {};
         formData.forEach((value, key) => {
-            data[key] = parseFloat(value);
+            // The patient code is text; every other field is a number
+            data[key] = key === "patient_code" ? value.trim() : parseFloat(value);
         });
 
         const resultEmpty = resultPanel.querySelector("#resultEmpty");
@@ -57,6 +79,7 @@ document.querySelectorAll("form.predict-form").forEach((form) => {
 
         resultEmpty.classList.add("is-hidden");
         resultFilled.classList.remove("is-hidden");
+        resetGauge(resultPanel);
         statusLine.textContent = "Analyzing…";
         statusLine.className = "status-line";
 
@@ -67,10 +90,15 @@ document.querySelectorAll("form.predict-form").forEach((form) => {
                 body: JSON.stringify(data)
             });
 
+            if (response.status === 401) {   // the session ended: go back to sign in, then return here
+                window.location.href = "/login?next=" + encodeURIComponent(window.location.pathname);
+                return;
+            }
+
             const result = await response.json();
 
             if (result.error) {
-                statusLine.textContent = "Error: " + result.error;
+                statusLine.textContent = result.error;
                 statusLine.className = "status-line status-positive";
                 return;
             }
@@ -91,6 +119,7 @@ document.querySelectorAll("form.predict-form").forEach((form) => {
 
             statusLine.textContent = statusText;
             statusLine.className = "status-line " + statusClass;
+            showSavedNote(statusLine, result);
 
         } catch (err) {
             statusLine.textContent = "Something went wrong. Please try again.";

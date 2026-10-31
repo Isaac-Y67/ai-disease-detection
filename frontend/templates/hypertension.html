@@ -36,6 +36,18 @@
     <form id="hypertensionForm" class="form-panel predict-form" data-endpoint="/predict-hypertension" autocomplete="off">
 
         <fieldset class="form-section">
+            <legend>Patient</legend>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="patient_code">Patient code <span>no names</span></label>
+                    <input type="text" id="patient_code" name="patient_code" required maxlength="20"
+                           pattern="[A-Za-z0-9\-]{1,20}" autocomplete="off" placeholder="e.g. NBI-0042"
+                           title="1 to 20 letters, digits or hyphens">
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="form-section">
             <legend>Patient profile</legend>
             <div class="field-grid">
                 <div class="field">

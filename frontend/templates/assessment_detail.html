@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment {{ a.assessment_id }} — AI Disease Detection System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="module-nav">
+    <a href="/">Heart Disease</a>
+    <a href="/diabetes">Diabetes</a>
+    <a href="/hypertension">Hypertension</a>
+    <a href="/lung-cancer">Lung Cancer</a>
+    {% include "_userbox.html" %}
+</nav>
+
+<header class="site-header">
+    <div class="ecg-line" aria-hidden="true">
+        <svg viewBox="0 0 600 60" preserveAspectRatio="none">
+            <polyline points="0,30 60,30 75,30 85,10 95,50 105,30 120,30 180,30 195,30 205,15 215,45 225,30 240,30 300,30 315,30 325,10 335,50 345,30 360,30 420,30 435,30 445,15 455,45 465,30 480,30 540,30 555,30 565,10 575,50 585,30 600,30"/>
+        </svg>
+    </div>
+    <div class="header-inner">
+        <span class="module-badge">Assessment #{{ a.assessment_id }}</span>
+        <h1>{{ a.module_name }} assessment</h1>
+        <p class="header-sub">Patient {{ a.patient_code }} &middot; {{ a.created_at.strftime('%d %b %Y, %H:%M') }}</p>
+    </div>
+</header>
+
+<main class="history-layout">
+    <section class="form-panel">
+        <h2 class="panel-title">Result</h2>
+        <dl class="detail-grid">
+            <dt>Patient code</dt><dd>{{ a.patient_code }}</dd>
+            <dt>Module</dt><dd>{{ a.module_name }}</dd>
+            <dt>Outcome</dt>
+            <dd>
+                <span class="pill pill-{{ a.risk_level|lower }}">{{ a.risk_level }} risk</span>
+                &middot; {{ '%.1f'|format(a.probability * 100) }}% confidence
+                &middot; {{ 'Disease indicators detected' if a.prediction == 1 else 'No disease indicators detected' }}
+            </dd>
+            <dt>Model used</dt><dd>{{ a.algorithm }} (version {{ a.model_version_id }}, trained {{ a.trained_on }})</dd>
+            <dt>Performed by</dt><dd>{{ a.performed_by_name }}</dd>
+        </dl>
+        <p class="disclaimer">This result is decision-support information only and should be reviewed by a qualified healthcare professional.</p>
+    </section>
+
+    <section class="form-panel">
+        <h2 class="panel-title">Inputs recorded</h2>
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                <tbody>
+                    {% for name, value in a.input_data.items() %}
+                    <tr><td>{{ name }}</td><td>{{ value }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <p><a class="btn-small" href="{{ url_for('history') }}">Back to history</a></p>
+</main>
+
+<footer class="site-footer">
+    <p>Decision-support output only &mdash; always to be reviewed by a qualified healthcare professional.</p>
+</footer>
+
+</body>
+</html>

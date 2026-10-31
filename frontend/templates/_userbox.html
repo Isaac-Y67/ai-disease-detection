@@ -1,5 +1,8 @@
 {% if g.user %}
 <div class="nav-user">
+    {% if g.user.role_name == 'Healthcare Professional' %}
+    <a href="{{ url_for('history') }}" class="{{ 'active' if request.path.startswith('/history') or request.path.startswith('/assessment') else '' }}">History</a>
+    {% endif %}
     <span><strong>{{ g.user.full_name }}</strong> &middot; {{ g.user.role_name }}</span>
     <form method="post" action="{{ url_for('logout') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

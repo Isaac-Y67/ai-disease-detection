@@ -1,0 +1,65 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Audit log{% endblock %}
+{% block badge %}Accountability{% endblock %}
+{% block heading %}Audit log{% endblock %}
+{% block subheading %}A permanent record of who signed in, who changed which account, who saved an assessment, and who opened a patient record.{% endblock %}
+{% block main_class %}history-layout{% endblock %}
+
+{% block content %}
+<section class="form-panel">
+    <form method="get" action="{{ url_for('admin_audit') }}" class="filter-bar">
+        <div class="field">
+            <label for="action">What happened</label>
+            <select id="action" name="action">
+                <option value="">Everything</option>
+                {% for a in actions %}
+                <option value="{{ a }}" {{ 'selected' if action == a else '' }}>{{ labels.get(a, a) }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="from">From</label>
+            <input type="date" id="from" name="from" value="{{ date_from }}">
+        </div>
+        <div class="field">
+            <label for="to">To</label>
+            <input type="date" id="to" name="to" value="{{ date_to }}">
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn-small primary">Apply</button>
+            <a href="{{ url_for('admin_audit') }}" class="btn-link">Clear</a>
+        </div>
+    </form>
+</section>
+
+<section class="form-panel">
+    <h2 class="panel-title">{{ total }} entr{{ 'y' if total == 1 else 'ies' }}</h2>
+
+    {% if rows %}
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr><th>When</th><th>Who</th><th>What happened</th><th>Record</th><th>Address</th></tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td>{{ r.created_at.strftime('%d %b %Y, %H:%M:%S') }}</td>
+                    <td>{% if r.full_name %}{{ r.full_name }}<br><span class="panel-note">{{ r.email }}</span>{% else %}<span class="panel-note">Unknown (not signed in)</span>{% endif %}</td>
+                    <td>{{ labels.get(r.action, r.action) }}</td>
+                    <td>{% if r.entity %}{{ r.entity }} #{{ r.entity_id }}{% else %}&mdash;{% endif %}</td>
+                    <td>{{ r.ip_address or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="panel-note">No entries match these filters.</p>
+    {% endif %}
+
+    {% set pager_endpoint = 'admin_audit' %}
+    {% include "_pager.html" %}
+</section>
+{% endblock %}

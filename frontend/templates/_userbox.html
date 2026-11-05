@@ -3,6 +3,7 @@
     {% if g.user.role_name == 'Healthcare Professional' %}
     <a href="{{ url_for('history') }}" class="{{ 'active' if request.path.startswith('/history') or request.path.startswith('/assessment') else '' }}">History</a>
     {% endif %}
+    <a href="{{ url_for('change_password') }}" class="{{ 'active' if request.path.startswith('/account') else '' }}">Account</a>
     <span><strong>{{ g.user.full_name }}</strong> &middot; {{ g.user.role_name }}</span>
     <form method="post" action="{{ url_for('logout') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

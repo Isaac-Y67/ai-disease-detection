@@ -37,6 +37,19 @@ app.jinja_env.globals["csrf_token"] = csrf_token
 # A throw-away hash, so a login for an unknown email takes as long as a real one
 DUMMY_HASH = generate_password_hash("not-a-real-password")
 
+ACTION_LABELS = {
+    "login": "Signed in",
+    "login_failed": "Failed sign-in",
+    "logout": "Signed out",
+    "user_created": "Account created",
+    "user_deactivated": "Account deactivated",
+    "user_reactivated": "Account reactivated",
+    "assessment_created": "Assessment saved",
+    "assessment_viewed": "Record opened by an administrator",
+    "password_changed": "Password changed",
+    "password_change_failed": "Password change refused (wrong current password)",
+}
+
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 SAVED_MODELS_DIR = os.path.join(BASE_DIR, "..", "..", "ml", "saved_models")
@@ -285,9 +298,10 @@ def predict_lung_cancer():
     return run_prediction("lung_cancer")
 
 
-# ---------- Assessment history (healthcare professionals: their own assessments) ----------
+# ---------- Assessment lists (shared filter handling) ----------
 
 PAGE_SIZE = 20
+AUDIT_PAGE_SIZE = 50
 
 
 def parse_date(text):
@@ -297,47 +311,138 @@ def parse_date(text):
         return None
 
 
-@app.route("/history")
-@role_required(ROLE_HP)
-def history():
-    modules = db.list_modules()
+def read_page():
+    try:
+        return max(1, int(request.args.get("page", "1")))
+    except ValueError:
+        return 1
 
+
+def read_assessment_filters(modules):
+    """Read the filter box. Anything that is not valid is quietly ignored, never passed to the database."""
     patient = request.args.get("patient", "").strip().upper()
     if patient and not PATIENT_CODE_PATTERN.match(patient):
         patient = ""
     module = request.args.get("module", "")
     if module not in [m["module_code"] for m in modules]:
         module = ""
-    date_from, date_to = parse_date(request.args.get("from")), parse_date(request.args.get("to"))
-    try:
-        page = max(1, int(request.args.get("page", "1")))
-    except ValueError:
-        page = 1
+    return patient, module, parse_date(request.args.get("from")), parse_date(request.args.get("to"))
 
+
+def build_filters(**values):
+    """The filters that must survive on the Previous / Next links (empty ones are dropped)."""
+    names = {"date_from": "from", "date_to": "to"}
+    cleaned = {}
+    for key, value in values.items():
+        if isinstance(value, date):
+            value = value.isoformat()
+        if value:
+            cleaned[names.get(key, key)] = value
+    return cleaned
+
+
+@app.route("/history")
+@role_required(ROLE_HP)
+def history():
+    modules = db.list_modules()
+    patient, module, date_from, date_to = read_assessment_filters(modules)
+    page = read_page()
     rows, total = db.search_assessments(
         user_id=g.user["user_id"], patient_code=patient, module_code=module,
         date_from=date_from, date_to=date_to, limit=PAGE_SIZE, offset=(page - 1) * PAGE_SIZE)
-    pages = max(1, math.ceil(total / PAGE_SIZE))
-
-    # Filters that carry over to the Previous / Next links
-    filters = {k: v for k, v in {"patient": patient, "module": module,
-                                 "from": date_from.isoformat() if date_from else "",
-                                 "to": date_to.isoformat() if date_to else ""}.items() if v}
-    return render_template("history.html", rows=rows, total=total, page=page, pages=pages,
-                           modules=modules, filters=filters, patient=patient, module=module,
+    filters = build_filters(patient=patient, module=module, date_from=date_from, date_to=date_to)
+    return render_template("history.html", rows=rows, total=total, page=page,
+                           pages=max(1, math.ceil(total / PAGE_SIZE)), modules=modules, filters=filters,
+                           patient=patient, module=module,
                            date_from=filters.get("from", ""), date_to=filters.get("to", ""))
 
 
 @app.route("/assessment/<int:assessment_id>")
-@role_required(ROLE_HP)
+@login_required
 def assessment_detail(assessment_id):
-    assessment = db.get_assessment(assessment_id, user_id=g.user["user_id"])   # only your own
+    is_admin = g.user["role_name"] == ROLE_ADMIN
+    # A healthcare professional can open only their own records; an administrator can open any (Table 20)
+    assessment = db.get_assessment(assessment_id, user_id=None if is_admin else g.user["user_id"])
     if assessment is None:
         abort(404)
-    return render_template("assessment_detail.html", a=assessment)
+    if is_admin:   # opening a patient record is itself recorded
+        db.write_audit(g.user["user_id"], "assessment_viewed", "assessments", assessment_id, request.remote_addr)
+    return render_template("assessment_detail.html", a=assessment, active_page="assessments")
+
+
+# ---------- Account: change your own password ----------
+
+@app.route("/account/password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    problem = None
+    if request.method == "POST":
+        check_csrf()
+        current = request.form.get("current_password", "")
+        new = request.form.get("new_password", "")
+        confirm = request.form.get("confirm_password", "")
+        user = db.get_user_by_id(g.user["user_id"])     # read the stored hash fresh
+
+        if not check_password_hash(user["password_hash"], current):
+            problem = "Your current password is not correct."
+            db.write_audit(user["user_id"], "password_change_failed", "users", user["user_id"], request.remote_addr)
+        elif len(new) < 10 or len(new) > 256:
+            problem = "The new password must be between 10 and 256 characters."
+        elif new != confirm:
+            problem = "The two new passwords do not match."
+        elif new == current:
+            problem = "Choose a password that is different from the current one."
+
+        if problem is None:
+            db.update_password(user["user_id"], generate_password_hash(new))
+            db.write_audit(user["user_id"], "password_changed", "users", user["user_id"], request.remote_addr)
+            session.clear()                       # a fresh session after any change of credentials
+            session["user_id"] = user["user_id"]
+            session.permanent = True
+            flash("Your password was changed.", "ok")
+            return redirect(url_for("change_password"))
+
+    return render_template("account_password.html", active_page="account", problem=problem), (400 if problem else 200)
 
 
 # ---------- Administration (administrators only) ----------
+
+@app.route("/admin/assessments")
+@role_required(ROLE_ADMIN)
+def admin_assessments():
+    modules, staff = db.list_modules(), db.list_users()
+    patient, module, date_from, date_to = read_assessment_filters(modules)
+    staff_ids = {str(u["user_id"]): u["user_id"] for u in staff}
+    staff_id = staff_ids.get(request.args.get("staff", ""))
+    page = read_page()
+    rows, total = db.search_assessments(
+        user_id=staff_id, patient_code=patient, module_code=module,
+        date_from=date_from, date_to=date_to, limit=PAGE_SIZE, offset=(page - 1) * PAGE_SIZE)
+    filters = build_filters(patient=patient, module=module, date_from=date_from, date_to=date_to,
+                            staff=str(staff_id) if staff_id else "")
+    return render_template("admin_assessments.html", active_page="assessments", rows=rows, total=total,
+                           page=page, pages=max(1, math.ceil(total / PAGE_SIZE)), modules=modules, staff=staff,
+                           filters=filters, patient=patient, module=module, staff_id=str(staff_id or ""),
+                           date_from=filters.get("from", ""), date_to=filters.get("to", ""))
+
+
+@app.route("/admin/audit")
+@role_required(ROLE_ADMIN)
+def admin_audit():
+    actions = db.list_audit_actions()
+    action = request.args.get("action", "")
+    if action not in actions:
+        action = ""
+    date_from, date_to = parse_date(request.args.get("from")), parse_date(request.args.get("to"))
+    page = read_page()
+    rows, total = db.search_audit(action=action, date_from=date_from, date_to=date_to,
+                                  limit=AUDIT_PAGE_SIZE, offset=(page - 1) * AUDIT_PAGE_SIZE)
+    filters = build_filters(action=action, date_from=date_from, date_to=date_to)
+    return render_template("admin_audit.html", active_page="audit", rows=rows, total=total, page=page,
+                           pages=max(1, math.ceil(total / AUDIT_PAGE_SIZE)), actions=actions, labels=ACTION_LABELS,
+                           filters=filters, action=action,
+                           date_from=filters.get("from", ""), date_to=filters.get("to", ""))
+
 
 def render_users_page(problem=None, form=None, status=200):
     return render_template("admin_users.html", active_page="users", users=db.list_users(),
@@ -363,8 +468,8 @@ def admin_users():
         problem = "Enter a valid email address."
     elif role_name not in db.list_roles():
         problem = "Choose a role from the list."
-    elif len(password) < 10:
-        problem = "The password must be at least 10 characters."
+    elif len(password) < 10 or len(password) > 256:
+        problem = "The password must be at least 10 characters (up to 256)."
 
     if problem is None:
         new_id = db.create_user(full_name, email, generate_password_hash(password), role_name)

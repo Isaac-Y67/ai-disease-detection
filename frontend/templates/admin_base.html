@@ -13,6 +13,8 @@
 
 <nav class="module-nav">
     <a href="{{ url_for('admin_users') }}" class="{{ 'active' if active_page == 'users' else '' }}">Users</a>
+    <a href="{{ url_for('admin_assessments') }}" class="{{ 'active' if active_page == 'assessments' else '' }}">Assessments</a>
+    <a href="{{ url_for('admin_audit') }}" class="{{ 'active' if active_page == 'audit' else '' }}">Audit log</a>
     {% include "_userbox.html" %}
 </nav>
 
@@ -23,13 +25,13 @@
         </svg>
     </div>
     <div class="header-inner">
-        <span class="module-badge">Administration</span>
+        <span class="module-badge">{% block badge %}Administration{% endblock %}</span>
         <h1>{% block heading %}Administration{% endblock %}</h1>
         <p class="header-sub">{% block subheading %}{% endblock %}</p>
     </div>
 </header>
 
-<main class="layout">
+<main class="{% block main_class %}layout{% endblock %}">
     {% block content %}{% endblock %}
 </main>
 

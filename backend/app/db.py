@@ -217,7 +217,8 @@ def search_assessments(user_id=None, patient_code=None, module_code=None,
     source = (
         " FROM assessments a JOIN patients p ON p.patient_id = a.patient_id"
         " JOIN model_versions mv ON mv.model_version_id = a.model_version_id"
-        " JOIN disease_modules m ON m.module_id = mv.module_id" + where
+        " JOIN disease_modules m ON m.module_id = mv.module_id"
+        " JOIN users u ON u.user_id = a.performed_by" + where
     )
     conn = get_connection()
     try:
@@ -226,7 +227,7 @@ def search_assessments(user_id=None, patient_code=None, module_code=None,
             total = cur.fetchone()["n"]
             cur.execute(
                 "SELECT a.assessment_id, a.created_at, p.patient_code, m.module_code, m.module_name, "
-                "a.prediction, a.probability, a.risk_level, mv.algorithm" + source +
+                "a.prediction, a.probability, a.risk_level, mv.algorithm, u.full_name AS performed_by_name" + source +
                 " ORDER BY a.created_at DESC, a.assessment_id DESC LIMIT %s OFFSET %s",
                 params + [limit, offset],
             )
@@ -264,5 +265,59 @@ def get_assessment(assessment_id, user_id=None):
         if isinstance(row["input_data"], (str, bytes)):
             row["input_data"] = json.loads(row["input_data"])
         return row
+    finally:
+        conn.close()
+
+
+# ---------- Audit log ----------
+
+def list_audit_actions():
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT action FROM audit_log ORDER BY action")
+            return [row["action"] for row in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def search_audit(action=None, date_from=None, date_to=None, limit=50, offset=0):
+    """The audit trail, newest first. Returns (rows, total_count). Each row names the user, if known."""
+    conditions, params = [], []
+    if action:
+        conditions.append("l.action = %s")
+        params.append(action)
+    if date_from:
+        conditions.append("l.created_at >= %s")
+        params.append(date_from)
+    if date_to:
+        conditions.append("l.created_at < %s")
+        params.append(date_to + timedelta(days=1))   # the end date is inclusive
+    where = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+    source = " FROM audit_log l LEFT JOIN users u ON u.user_id = l.user_id" + where
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS n" + source, params)
+            total = cur.fetchone()["n"]
+            cur.execute(
+                "SELECT l.log_id, l.created_at, l.action, l.entity, l.entity_id, l.ip_address, "
+                "u.full_name, u.email" + source +
+                " ORDER BY l.created_at DESC, l.log_id DESC LIMIT %s OFFSET %s",
+                params + [limit, offset],
+            )
+            return cur.fetchall(), total
+    finally:
+        conn.close()
+
+
+# ---------- Password change ----------
+
+def update_password(user_id, password_hash):
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET password_hash = %s WHERE user_id = %s", (password_hash, user_id))
+        conn.commit()
     finally:
         conn.close()

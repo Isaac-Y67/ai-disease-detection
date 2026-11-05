@@ -1,0 +1,80 @@
+{% extends "admin_base.html" %}
+
+{% block title %}All assessments{% endblock %}
+{% block badge %}Oversight{% endblock %}
+{% block heading %}All assessments{% endblock %}
+{% block subheading %}Every assessment run by any member of staff. Patients appear by code only, and opening a record is written to the audit log.{% endblock %}
+{% block main_class %}history-layout{% endblock %}
+
+{% block content %}
+<section class="form-panel">
+    <form method="get" action="{{ url_for('admin_assessments') }}" class="filter-bar">
+        <div class="field">
+            <label for="patient">Patient code <span>starts with</span></label>
+            <input type="text" id="patient" name="patient" value="{{ patient }}" maxlength="20" autocomplete="off">
+        </div>
+        <div class="field">
+            <label for="module">Module</label>
+            <select id="module" name="module">
+                <option value="">All modules</option>
+                {% for m in modules %}
+                <option value="{{ m.module_code }}" {{ 'selected' if module == m.module_code else '' }}>{{ m.module_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="staff">Staff member</label>
+            <select id="staff" name="staff">
+                <option value="">All staff</option>
+                {% for u in staff %}
+                <option value="{{ u.user_id }}" {{ 'selected' if staff_id == u.user_id|string else '' }}>{{ u.full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="from">From</label>
+            <input type="date" id="from" name="from" value="{{ date_from }}">
+        </div>
+        <div class="field">
+            <label for="to">To</label>
+            <input type="date" id="to" name="to" value="{{ date_to }}">
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn-small primary">Apply</button>
+            <a href="{{ url_for('admin_assessments') }}" class="btn-link">Clear</a>
+        </div>
+    </form>
+</section>
+
+<section class="form-panel">
+    <h2 class="panel-title">{{ total }} assessment{{ '' if total == 1 else 's' }}</h2>
+
+    {% if rows %}
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr><th>Date</th><th>Patient code</th><th>Module</th><th>Result</th><th>Confidence</th><th>Staff member</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for a in rows %}
+                <tr>
+                    <td>{{ a.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+                    <td><strong>{{ a.patient_code }}</strong></td>
+                    <td>{{ a.module_name }}</td>
+                    <td><span class="pill pill-{{ a.risk_level|lower }}">{{ a.risk_level }} risk</span></td>
+                    <td>{{ '%.1f'|format(a.probability * 100) }}%</td>
+                    <td>{{ a.performed_by_name }}</td>
+                    <td class="row-action"><a class="btn-small" href="{{ url_for('assessment_detail', assessment_id=a.assessment_id) }}">View</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="panel-note">No assessments match these filters.</p>
+    {% endif %}
+
+    {% set pager_endpoint = 'admin_assessments' %}
+    {% include "_pager.html" %}
+</section>
+{% endblock %}
